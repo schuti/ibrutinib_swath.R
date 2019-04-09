@@ -1,7 +1,8 @@
 ################################################################################################################################
 # ibrutinib_swath.R: A custom R script for automatic data preprocessing, analysis and visualization of ibrutinib_swath dataset #
 # Author: Somchai Chutipongtanate                                                                                              #
-# Last update: March 31, 2019                                                                                                  #
+# Last update: April 9, 2019                                                                                                   #
+# Source: https://github.com/schuti/ibrutinib_swath.R                                                                          #
 ################################################################################################################################
 
 # Load: R packages
@@ -16,7 +17,7 @@ library(reshape2)
 library(FactoMineR)
 library(pheatmap)
 
-# Load: ibrutinib-SWATH dataset (PDXXXXXXX)
+# Load: ibrutinib-SWATH dataset (PXD013402)
 setwd("~/Desktop")
 data_path <- "~/Desktop/ibrutinib_SWATH.xlsx"
 
