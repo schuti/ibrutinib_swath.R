@@ -1,7 +1,7 @@
 ################################################################################################################################
 # ibrutinib_swath.R: A custom R script for automatic data preprocessing, analysis and visualization of ibrutinib_swath dataset #
 # Author: Somchai Chutipongtanate                                                                                              #
-# Last update: April 9, 2019                                                                                                   #
+# Last update: April 22, 2019                                                                                                   #
 # Source: https://github.com/schuti/ibrutinib_swath.R                                                                          #
 ################################################################################################################################
 
@@ -23,8 +23,14 @@ data_path <- "~/Desktop/ibrutinib_SWATH.xlsx"
 
 # Start: Data preprocess -----------------------------------------------------------------------------
 ## loading
-group <- as.factor(c("W", "W", "W", "iW", "iW", "iW", "Q", "Q", "Q", "iQ", "iQ", "iQ"))
-sample_label <- as.character(c("W1", "W2", "W3", "iW1", "iW2", "iW3", "Q1", "Q2", "Q3", "iQ1", "iQ2", "iQ3"))
+group <- as.factor(c("WT", "WT", "WT", "WT+inh", "WT+inh", "WT+inh", "Q741x", "Q741x", "Q741x", "Q741x+inh", "Q741x+inh", "Q741x+inh"))
+#group <- as.factor(c("W", "W", "W", "iW", "iW", "iW", "Q", "Q", "Q", "iQ", "iQ", "iQ"))
+group <- factor(group, ordered = TRUE, 
+                levels = c("Q741x+inh", "WT+inh", "Q741x", "WT"))
+
+sample_label <- as.character(c("WT_1", "WT_2", "WT_3", "WT+inh_1", "WT+inh_2", "WT+inh_3", "Q741x_1", "Q741x_2", "Q741x_3", "Q741x+inh_1", "Q741x+inh_2", "Q741x+inh_3"))
+#sample_label <- as.character(c("W1", "W2", "W3", "iW1", "iW2", "iW3", "Q1", "Q2", "Q3", "iQ1", "iQ2", "iQ3"))
+
 areaPept <- read_excel(data_path, sheet = "Area - peptides")
 areaProt <- read_excel(data_path, sheet = "Area - proteins")
 
@@ -33,7 +39,9 @@ df <- areaProt[ ,1] %>%
   tidyr::separate(Protein, c("sp", "uniProtID", "entry_name"), sep = "\\|") %>%
   tidyr::separate(entry_name, c("entry_names", "species"), sep = "_") %>%
   dplyr::select(uniProtID, entry_names, species) 
-ensembl <- useMart("ensembl", dataset="mmusculus_gene_ensembl")
+ensembl <- useMart("ensembl", dataset="mmusculus_gene_ensembl",
+                   host = "www.ensembl.org",
+                   ensemblRedirect = FALSE)
 tmp <- getBM(attributes = c('uniprotswissprot', 'external_gene_name'), 
              filters = 'uniprotswissprot', 
              values = df$uniProtID, 
@@ -97,8 +105,9 @@ medianCV <- QC %>% dplyr::group_by(group) %>% summarise(CV = round(median(CV), 1
 
 # Violin plot of inter-group CV 
 plot.qc <- ggplot(QC, aes(x=group, y=CV)) + 
-              geom_violin(aes(fill = group), trim=FALSE, width = 0.8, 
+              geom_violin(aes(fill = as.character(group)), trim=FALSE, width = 0.8, #aes(fill = group),
                           na.rm = TRUE, position = "dodge")+
+              labs(fill = "") +
               geom_boxplot(width=0.1, fill = 'white', outlier.size = 0, 
                           na.rm = TRUE, position = "dodge")+
               geom_text(data = medianCV, aes(label = CV), position = position_dodge(width = 1), 
@@ -125,16 +134,16 @@ plot_corrHM <- ggplot(data = melted_corr, aes(x = Var2, y = Var1, fill = value))
                   labs(x = "", y = "") +
                   theme_minimal() +
                   theme(axis.text.x = element_text(angle = 90, vjust = 1, 
-                                                   size = 10, hjust = 1)) +
+                                                   size = 8, hjust = 1)) +
                   coord_fixed() + 
                   geom_text(aes(label = value), color = "black", size = 2) +  
-                  theme(axis.text.y = element_text(color = "black", size=10),
+                  theme(axis.text.y = element_text(color = "black", size=8),
                         panel.grid.major = element_blank(),
                         panel.border = element_blank(),
                         panel.background = element_blank(),
                         axis.ticks = element_blank(),
                         legend.justification = c(1, 0),
-                        legend.position = c(0.5, 0.7),
+                        legend.position = c(0.6, 0.7),
                         legend.direction = "horizontal")+
                   guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
                                title.position = "top", title.hjust = 0.5))
@@ -169,9 +178,10 @@ dev.off()
 fit_pca <- PCA(log_ds[ , 2:length(log_ds)], graph = FALSE, scale.unit = TRUE)
 percentage <- fit_pca$eig[ , 2]
 PCs <- data.frame(fit_pca$ind$coord)
-PCs$group <- group  
+PCs$group <- as.character(group) 
 plotPCA <- ggplot(data = PCs, aes(x = Dim.1, y = Dim.2)) +
               geom_point(aes(colour = group), size = 3) +
+              labs(colour = '') +
               xlab(paste0('PC1', ' ', '(', round(percentage[1], 2), '%)')) + 
               ylab(paste0('PC2', ' ', '(', round(percentage[2], 2), '%)')) +
               scale_fill_hue(l=40) + 
@@ -205,9 +215,10 @@ qc_hm_plot <- pheatmap(t(qc_hm),
                          clustering_method_columns = "complete",
                          cluster_rows = FALSE, 
                          fontsize_row = 8, fontsize_col = 1, 
-                         scale = "none",
-                         main = paste0("Total ", n_total, " data points; ", n_missing, " missing values (", round(100*n_missing/n_total, 2), "%) showed in black)") )
+                         scale = "none") 
+                         #main = paste0("Total ", n_total, " data points; ", n_missing, " missing values (", round(100*n_missing/n_total, 2), "%) showed in black)") )
 qc_hm_plot
+print(paste0("QC_heatmap: Total ", n_total, " data points; ", n_missing, " missing values (", round(100*n_missing/n_total, 2), "%) showed in black)"))
 pdf("qc_heatmap.pdf", width = 8, height = 4)
 print(qc_hm_plot)
 dev.off()
@@ -240,17 +251,27 @@ long_ano.fc <- long_ano %>%
   left_join(long_fc, by = c("gene", "compare"))
 long_ano.fc$gene <- as.character(long_ano.fc$gene)
 volcano_all <- ggplot(data = long_ano.fc, aes(x= log2FC, y=-log10(adj_pVal))) +
-                    geom_point(aes(color = as.factor(abs(log2FC) >= log2(1.5) &	anova.pVal < 0.05 & adj_pVal < 0.05)), size = 3, alpha = 0.5, show.legend = FALSE) +
+                    geom_point(aes(color = as.factor(abs(log2FC) >= log2(1.5) &	anova.pVal < 0.05 & adj_pVal < 0.05)), size = 3,  show.legend = FALSE) + #alpha = 0.5,
                     scale_color_manual(values = c("grey", "red")) +
                     xlab("log2 (fold change)") + ylab("-log10 (adjusted p-value)") +
-                    ggtitle(label = paste0("Volcano plot at ", 1.5, 
-                                           "x fold change and adjusted P-value < ", 0.05)) + 
+                   # ggtitle(label = paste0("Volcano plot at ", 1.5, 
+                    #                       "x fold change and adjusted P-value < ", 0.05)) + 
                     theme_grey(base_size = 15) +
+                    geom_text_repel(data = (subset(long_ano.fc, 
+                                    abs(log2FC) > 2 & -log10(adj_pVal) > 1.33 | -log10(adj_pVal) > 6)),
+                                    aes(label = gene, size = 0.1),
+                                    show.legend = FALSE,
+                                    colour = 'darkblue',
+                                   # box.padding = unit(0.35, "lines"),
+                                    point.padding = unit(0.5, "lines")
+                                    ) +
                     facet_wrap(~ compare)
 volcano_all
-pdf("valcano_all.pdf", width = 12, height = 6)
+print(paste0("Volcano_plot: thresholds at ", 1.5, "x fold change and adjusted P-value < ", 0.05))
+pdf("volcano_all.pdf", width = 12, height = 6)
 print(volcano_all)
 dev.off()
+
 
 ## Significant protein heatmap by pheatmap (ref#4)
 tmp <- as.matrix(log_ds[ , 2:length(log_ds)])
@@ -260,24 +281,28 @@ tmp <- anova_ds[, 1]
 medScale <- data.frame(medScale, 
                       anova_pVal = tmp, 
                       gene = rownames(medScale))
+colnames(medScale) <- c("WT_1", "WT_2", "WT_3", "WT+inh_1", "WT+inh_2", "WT+inh_3", "Q741x_1", "Q741x_2", "Q741x_3", "Q741x+inh_1", "Q741x+inh_2", "Q741x+inh_3", "anova_pVal", "gene")
 medScale_sig <- medScale %>% filter(anova_pVal < 0.05)
 rownames(medScale_sig) <- medScale_sig$gene
 medScale_sig <- medScale_sig[, 1: (length(medScale_sig) - 2)]
 nprot_sig <- nrow(medScale_sig)
+group <- factor(group, ordered = TRUE, 
+                levels = c("WT+inh", "Q741x+inh", "Q741x", "WT"))
 hm_sig <- pheatmap(medScale_sig, silent = FALSE,
                      breaks = seq(-(max(round(medScale_sig, 0))), max(round(medScale_sig, 0)), length.out=101), 
                      legend_breaks = seq(-(max(round(medScale_sig, 0))), max(round(medScale_sig, 0)), length.out=5),
                      color = colorRampPalette(c("darkblue", "blue", "white", "orangered", "red"))(100),  
                      border_color = NA,
-                     annotation_col = data.frame(group = factor(group), 
+                     annotation_col = data.frame(group = group, #factor(group), 
                                                  row.names = sample_label),
                      clustering_distance_rows = "correlation",
                      clustering_distance_cols = "correlation", 
                      clustering_method = "average", 
                      fontsize_row = 2, fontsize_col = 10, 
-                     scale = "none",
-                     main = paste0(nprot_sig, " significant proteins (ANOVA p-value < ", 0.05, ")", "\nScale: Log2(fold change) with mean center", "\nClustering: Correlation distance and average linkage"))
+                     scale = "none")
+                     #main = paste0(nprot_sig, " significant proteins (ANOVA p-value < ", 0.05, ")", "\nScale: Log2(fold change) with mean center", "\nClustering: Correlation distance and average linkage"))
 hm_sig
+print(paste0("Significant protein heatmap:", nprot_sig, " significant proteins (ANOVA p-value < ", 0.05, ")", "; Scale: Log2(fold change) with mean center", "; Clustering: Correlation distance and average linkage"))
 pdf("heatmap_sig.pdf", width = 6, height = 9)
 print(hm_sig)
 dev.off()
