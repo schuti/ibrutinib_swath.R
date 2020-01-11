@@ -6,9 +6,13 @@ A custom R script for automatic data preprocessing, analysis and visualization o
 2. Open RStudio
 3. Install package dependencies 
 
+```
 install.packages(c("readxl", "dplyr", "tidyr", "ggplot2", "ggrepel", "reshape2", "FactoMineR", "pheatmap"))
+
 source("https://bioconductor.org/biocLite.R")
+
 biocLite(c("biomaRt", "preprocessCore"))
+```
 
 4. Download the dataset (ibrutinib_swath.xlsx) onto the user's desktop. The dataset is available via ProteomeXchange repository (PXD013402) and also downloadable as the supplementary dataset 1 once the dataset published
 5. Download ibrutinib_swath_final.R (or R_Notebook_ibrutinib_swath.Rmd) and open in RStudio
