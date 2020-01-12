@@ -18,8 +18,15 @@ biocLite(c("biomaRt", "preprocessCore"))
 5. Download ibrutinib_swath_final.R (or R_Notebook_ibrutinib_swath.Rmd) and open in RStudio
 6. Run the code.
 
+## Tutorial
+A tutorial based on the R_Notebook_ibrutinib_swath.Rmd is available - See the tutorial.pdf file for details
+
+## Author
+Somchai Chutipongtanate
+
 ## License
-schuti/ibrutinib_swath.R is licensed under the GNU General Public License v3.0. Permissions of this strong copyleft license are conditioned on making available complete source code of licensed works and modifications, which include larger works using a licensed work, under the same license. Copyright and license notices must be preserved. Contributors provide an express grant of patent rights.
+schuti/ibrutinib_swath.R is licensed under the GNU General Public License v3.0 - see the LICENSE file for details
+
 
 
 
