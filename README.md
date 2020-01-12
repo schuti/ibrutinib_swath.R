@@ -19,7 +19,7 @@ biocLite(c("biomaRt", "preprocessCore"))
 6. Run the code.
 
 ## Tutorial
-A tutorial based on the R_Notebook_ibrutinib_swath.Rmd is available - see the tutorial.pdf file for details
+A tutorial based on the R_Notebook_ibrutinib_swath.Rmd is available - see the Tutorial.pdf file for details
 
 ## Author
 Somchai Chutipongtanate
